@@ -1,19 +1,19 @@
 import React from "react";
-import QuizCard from "../components/QuizCard";
+import { Link } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 const Home = () => {
-  const quizzes = [
-    { id: 1, title: "Math Quiz", description: "Test your math skills!" },
-    { id: 2, title: "Science Quiz", description: "Test your science knowledge!" },
-  ];
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Available Quizzes</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {quizzes.map((quiz) => (
-          <QuizCard key={quiz.id} quiz={quiz} />
-        ))}
+    <div>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-4">Welcome to the Quiz App</h1>
+        <p className="mb-4">Take quizzes and test your knowledge!</p>
+        <Link to="/quiz/1">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Start Quiz
+          </button>
+        </Link>
       </div>
     </div>
   );

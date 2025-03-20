@@ -1,98 +1,67 @@
 import React, { useState, useEffect } from "react";
-import QuestionCard from "../components/QuestionCard";
+import axios from "axios";
+import { useParams } from "react-router-dom"; // Import useParams
+import Navbar from "../components/Navbar";
 
 const Quiz = () => {
-  const [questions, setQuestions] = useState([]);
+  const { id } = useParams(); // Use useParams to get the quiz ID
+  const [quiz, setQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [selectedAnswer, setSelectedAnswer] = useState("");
 
-  // Fetch questions and start the timer
   useEffect(() => {
-    // Fetch questions from the backend (mock data for now)
-    const mockQuestions = [
-      {
-        id: 1,
-        type: "MCQ",
-        questionText: "What is 2 + 2?",
-        options: ["3", "4", "5", "6"],
-        correctAnswer: "4",
-        marks: 1,
-      },
-      {
-        id: 2,
-        type: "true/false",
-        questionText: "The Earth is flat.",
-        options: ["True", "False"],
-        correctAnswer: "False",
-        marks: 1,
-      },
-    ];
-    setQuestions(mockQuestions);
-
-    // Timer
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Tab locking feature
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        alert("Switching tabs is not allowed!");
-        // Optionally, submit the quiz or penalize the user.
+    const fetchQuiz = async () => {
+      try {
+        const res = await axios.get(`/api/quizzes/${id}`);
+        setQuiz(res.data);
+      } catch (err) {
+        console.error("Error fetching quiz:", err);
       }
     };
+    fetchQuiz();
+  }, [id]); // Add id as a dependency
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  if (!quiz) return <div>Loading...</div>;
 
-  // Webcam monitoring feature
-  useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        const video = document.createElement("video");
-        video.srcObject = stream;
-        video.play();
-        document.body.appendChild(video);
-      })
-      .catch((err) => {
-        console.error("Error accessing webcam:", err);
-      });
-  }, []);
-
-  const handleAnswer = (answer) => {
-    if (answer === questions[currentQuestion].correctAnswer) {
-      setScore((prev) => prev + questions[currentQuestion].marks);
+  const handleNextQuestion = () => {
+    if (currentQuestion < quiz.questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer("");
     }
-    setCurrentQuestion((prev) => prev + 1);
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Quiz</h1>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {currentQuestion < questions.length ? (
-          <QuestionCard
-            question={questions[currentQuestion]}
-            handleAnswer={handleAnswer}
-          />
-        ) : (
-          <div>
-            <h2 className="text-xl font-bold">Quiz Completed!</h2>
-            <p>Your Score: {score}</p>
-          </div>
-        )}
-        <p className="mt-4">
-          Time Left: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10 ? `0${timeLeft % 60}` : timeLeft % 60}
-        </p>
+    <div>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-4">{quiz.title}</h1>
+        <p className="mb-4">{quiz.description}</p>
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-bold mb-4">
+            Question {currentQuestion + 1}: {quiz.questions[currentQuestion].questionText}
+          </h2>
+          {quiz.questions[currentQuestion].options.map((option, index) => (
+            <div key={index} className="mb-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="answer"
+                  value={option}
+                  checked={selectedAnswer === option}
+                  onChange={() => setSelectedAnswer(option)}
+                  className="mr-2"
+                />
+                {option}
+              </label>
+            </div>
+          ))}
+          <button
+            onClick={handleNextQuestion}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Next Question
+          </button>
+        </div>
       </div>
     </div>
   );
